@@ -1,0 +1,25 @@
+# .gitignore
+# Ignore schema folder
+schema/
+
+# Ignore common system files
+.DS_Store
+Thumbs.db
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore logs
+*.log
+
+# Ignore Python cache (if any)
+__pycache__/
+*.pyc
+
+# Ignore Terraform state (if used)
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Ignore node_modules (if used)
+node_modules/
