@@ -1,51 +1,53 @@
-# Lab Azure Hub-and-Spoke en Bicep — Phase Fondation
+# Azure Hub-and-Spoke Lab with Bicep — Foundation Phase
 
-## Objectif
+> This lab is designed as a learning resource to discover and practice Bicep by building an Azure Hub-and-Spoke network architecture. It is intended for self-taught architects, cloud engineers, and curious students who want to gain solid foundations in infrastructure as code with Bicep, starting from a modular, scalable, and educational base.
 
-Cette phase met en place la **fondation réseau** d’une architecture **Hub-and-Spoke** dans Azure avec **Bicep**.
+## Objective
 
-L’objectif est de construire un socle :
-- **modulaire**
-- **lisible**
-- **évolutif**
-- et **à coût quasi nul**
+This phase sets up the **network foundation** of a **Hub-and-Spoke** architecture in Azure using **Bicep**.
 
-avant d’ajouter des composants plus avancés dans les phases suivantes.
+The goal is to build a foundation that is:
+- **modular**
+- **readable**
+- **scalable**
+- and **low cost**
+
+before adding more advanced components in later phases.
 
 ---
 
-## Principes de cette fondation
+## Foundation Principles
 
-Cette fondation a été pensée pour :
+This foundation is designed to:
 
-- préparer les futurs composants réseau et sécurité
-- réserver les subnets nécessaires à la suite
-- mettre en place la segmentation Hub / Spokes
-- appliquer une première couche de sécurité réseau
-- rester dans un périmètre **low cost**
+- prepare for future network and security components
+- reserve the necessary subnets for the next steps
+- implement Hub / Spoke segmentation
+- apply an initial layer of network security
+- remain within a **low cost** perimeter
 
-### Ressources volontairement non déployées à ce stade
-Afin de limiter les coûts, cette phase **ne déploie pas encore** :
+### Resources intentionally not deployed at this stage
+To keep costs low, this phase **does not yet deploy**:
 
 - Azure Firewall
 - VPN Gateway
 - Application Gateway
 - Virtual Machines
-- Private Endpoints réels
+- Real Private Endpoints
 - Public IP
 - NAT Gateway
 - Bastion
 
-Les subnets nécessaires à ces composants sont cependant déjà prévus.
+The subnets required for these components are already planned.
 
 ---
 
-## Ce que couvre la phase fondation
+## What the Foundation Phase Covers
 
-### Réseau
+### Network
 - 1 **Hub VNet**
-- 1 **Spoke Public VNet**
-- 1 **Spoke Private VNet**
+- 1 **Public Spoke VNet**
+- 1 **Private Spoke VNet**
 
 ### Subnets
 
@@ -54,138 +56,138 @@ Les subnets nécessaires à ces composants sont cependant déjà prévus.
 - `AzureFirewallSubnet`
 - `HubMgmtSubnet`
 
-#### Spoke Public
+#### Public Spoke
 - `AppGatewaySubnet`
 - `WebSubnet`
 
-#### Spoke Private
+#### Private Spoke
 - `ServerSubnet`
 - `PrivateEndpointSubnet`
 
-### Sécurité
-- 1 **Network Security Group** pour `WebSubnet`
-- 1 **Network Security Group** pour `ServerSubnet`
+### Security
+- 1 **Network Security Group** for `WebSubnet`
+- 1 **Network Security Group** for `ServerSubnet`
 
-### Routage
-- 1 **Route Table** pour `WebSubnet`
-- 1 **Route Table** pour `ServerSubnet`
+### Routing
+- 1 **Route Table** for `WebSubnet`
+- 1 **Route Table** for `ServerSubnet`
 
-### Connectivité
-- VNet peering **Hub -> Spoke Public**
-- VNet peering **Spoke Public -> Hub**
-- VNet peering **Hub -> Spoke Private**
-- VNet peering **Spoke Private -> Hub**
+### Connectivity
+- VNet peering **Hub -> Public Spoke**
+- VNet peering **Public Spoke -> Hub**
+- VNet peering **Hub -> Private Spoke**
+- VNet peering **Private Spoke -> Hub**
 
 ---
 
-## Architecture logique
+## Logical Architecture
 
 ### Hub VNet
-- Nom : `vnet-hub-${environment}`
-- CIDR : `10.0.0.0/16`
+- Name: `vnet-hub-${environment}`
+- CIDR: `10.0.0.0/16`
 
-Subnets :
+Subnets:
 - `GatewaySubnet` → `10.0.1.0/24`
 - `AzureFirewallSubnet` → `10.0.2.0/24`
 - `HubMgmtSubnet` → `10.0.3.0/24`
 
 ---
 
-### Spoke Public VNet
-- Nom : `vnet-spoke-public-${environment}`
-- CIDR : `172.16.0.0/16`
+### Public Spoke VNet
+- Name: `vnet-spoke-public-${environment}`
+- CIDR: `172.16.0.0/16`
 
-Subnets :
+Subnets:
 - `AppGatewaySubnet` → `172.16.0.0/24`
 - `WebSubnet` → `172.16.1.0/24`
 
-Associations :
-- `WebSubnet` reçoit la NSG `nsg-web-${environment}`
-- `WebSubnet` reçoit la Route Table `rt-web-${environment}`
+Associations:
+- `WebSubnet` is associated with NSG `nsg-web-${environment}`
+- `WebSubnet` is associated with Route Table `rt-web-${environment}`
 
 ---
 
-### Spoke Private VNet
-- Nom : `vnet-spoke-private-${environment}`
-- CIDR : `192.168.0.0/16`
+### Private Spoke VNet
+- Name: `vnet-spoke-private-${environment}`
+- CIDR: `192.168.0.0/16`
 
-Subnets :
+Subnets:
 - `ServerSubnet` → `192.168.1.0/24`
 - `PrivateEndpointSubnet` → `192.168.2.0/24`
 
-Associations :
-- `ServerSubnet` reçoit la NSG `nsg-server-${environment}`
-- `ServerSubnet` reçoit la Route Table `rt-server-${environment}`
+Associations:
+- `ServerSubnet` is associated with NSG `nsg-server-${environment}`
+- `ServerSubnet` is associated with Route Table `rt-server-${environment}`
 
 ---
 
-## Règles de sécurité
+## Security Rules
 
 ### NSG `nsg-web-${environment}`
-Appliquée à `WebSubnet`.
+Applied to `WebSubnet`.
 
-Règles :
-- autorise **TCP 80** depuis `AppGatewaySubnet` (`172.16.0.0/24`)
-- autorise **TCP 443** depuis `AppGatewaySubnet` (`172.16.0.0/24`)
-- autorise **TCP 22** depuis le futur pool VPN `10.250.0.0/24`
+Rules:
+- allow **TCP 80** from `AppGatewaySubnet` (`172.16.0.0/24`)
+- allow **TCP 443** from `AppGatewaySubnet` (`172.16.0.0/24`)
+- allow **TCP 22** from the future VPN pool `10.250.0.0/24`
 
 ---
 
 ### NSG `nsg-server-${environment}`
-Appliquée à `ServerSubnet`.
+Applied to `ServerSubnet`.
 
-Règles :
-- autorise **TCP 8080** depuis `WebSubnet` (`172.16.1.0/24`)
-- autorise **TCP 22** depuis le futur pool VPN `10.250.0.0/24`
+Rules:
+- allow **TCP 8080** from `WebSubnet` (`172.16.1.0/24`)
+- allow **TCP 22** from the future VPN pool `10.250.0.0/24`
 
 ---
 
-## Routage
+## Routing
 
 ### Route Table `rt-web-${environment}`
-Associée à `WebSubnet`.
+Associated with `WebSubnet`.
 
-Dans cette phase :
-- elle est créée
-- elle est attachée au subnet
-- elle ne contient pas encore de routes personnalisées (`routes: []`)
+In this phase:
+- it is created
+- it is attached to the subnet
+- it does not yet contain custom routes (`routes: []`)
 
 ---
 
 ### Route Table `rt-server-${environment}`
-Associée à `ServerSubnet`.
+Associated with `ServerSubnet`.
 
-Dans cette phase :
-- elle est créée
-- elle est attachée au subnet
-- elle ne contient pas encore de routes personnalisées (`routes: []`)
+In this phase:
+- it is created
+- it is attached to the subnet
+- it does not yet contain custom routes (`routes: []`)
 
 ---
 
 ## Peerings
 
-Cette fondation crée les 4 peerings suivants :
+This foundation creates the following 4 peerings:
 
 - `peer-hub-to-spoke-public`
 - `peer-spoke-public-to-hub`
 - `peer-hub-to-spoke-private`
 - `peer-spoke-private-to-hub`
 
-### Pourquoi 4 peerings ?
-Un peering Azure est **unidirectionnel**.  
-Pour une communication bidirectionnelle entre deux VNets, il faut créer le peering dans les deux sens.
+### Why 4 peerings?
+An Azure peering is **unidirectional**.  
+For bidirectional communication between two VNets, you must create peering in both directions.
 
-### Paramètres utilisés
+### Parameters used
 - `allowVirtualNetworkAccess = true`
 - `allowForwardedTraffic = true`
 - `useRemoteGateways = false`
 - `allowGatewayTransit = false`
 
-Ces paramètres préparent une architecture plus avancée pour la suite, tout en restant simples dans cette phase.
+These parameters prepare for a more advanced architecture in the future, while keeping things simple in this phase.
 
 ---
 
-## Structure du projet
+## Project Structure
 
 ```text
 .
@@ -202,66 +204,66 @@ Ces paramètres préparent une architecture plus avancée pour la suite, tout en
 
 ---
 
-## Fichiers
+## Files
 
 ### `main.foundation.bicep`
-Fichier principal de déploiement de la fondation.
+Main deployment file for the foundation.
 
-Il :
-- reçoit les paramètres
-- appelle les modules
-- crée les VNets
-- crée les NSG
-- crée les Route Tables
-- attache les NSG aux subnets concernés
-- attache les Route Tables aux subnets concernés
-- crée les peerings
-- expose les outputs nécessaires aux phases suivantes
+It:
+- receives parameters
+- calls modules
+- creates VNets
+- creates NSGs
+- creates Route Tables
+- attaches NSGs to the relevant subnets
+- attaches Route Tables to the relevant subnets
+- creates peerings
+- exposes outputs for the next phases
 
 ---
 
 ### `modules/vnet.bicep`
-Module de création de VNet.
+VNet creation module.
 
-Fonctionnalités :
-- création du VNet
-- création des subnets
-- attachement optionnel d’une NSG via `networkSecurityGroupId`
-- attachement optionnel d’une Route Table via `routeTableId`
+Features:
+- creates the VNet
+- creates subnets
+- optionally attaches an NSG via `networkSecurityGroupId`
+- optionally attaches a Route Table via `routeTableId`
 
 ---
 
 ### `modules/nsg.bicep`
-Module de création de Network Security Group.
+Network Security Group creation module.
 
-Fonctionnalités :
-- création d’une NSG
-- création dynamique des règles à partir d’un tableau `securityRules`
+Features:
+- creates an NSG
+- dynamically creates rules from a `securityRules` array
 
 ---
 
 ### `modules/routeTable.bicep`
-Module de création de Route Table.
+Route Table creation module.
 
-Fonctionnalités :
-- création d’une Route Table
-- création dynamique des routes à partir d’un tableau `routes`
-- prise en charge de `disableBgpRoutePropagation`
+Features:
+- creates a Route Table
+- dynamically creates routes from a `routes` array
+- supports `disableBgpRoutePropagation`
 
 ---
 
 ### `modules/peering.bicep`
-Module de création de VNet peering.
+VNet peering creation module.
 
-Fonctionnalités :
-- création du peering depuis un VNet source vers un VNet distant
-- configuration des options de connectivité
+Features:
+- creates peering from a source VNet to a remote VNet
+- configures connectivity options
 
 ---
 
-## Paramètres
+## Parameters
 
-Dans `main.foundation.bicep` :
+In `main.foundation.bicep`:
 
 ```bicep
 param location string
@@ -275,33 +277,33 @@ param environment string
 ```
 
 ### `location`
-Région Azure du déploiement.
+Azure deployment region.
 
-Exemple :
+Example:
 - `westeurope`
 
 ### `environment`
-Environnement cible.
+Target environment.
 
-Valeurs autorisées :
+Allowed values:
 - `dev`
 - `test`
 - `prod`
 
-Ce paramètre est utilisé pour :
-- nommer les ressources
-- distinguer les environnements
+This parameter is used to:
+- name resources
+- distinguish environments
 
-Exemples :
+Examples:
 - `vnet-hub-dev`
 - `nsg-web-dev`
 - `rt-server-dev`
 
 ---
 
-## Outputs exposés
+## Exposed Outputs
 
-Le template expose notamment :
+The template exposes the following:
 
 ### VNets
 - `hubVnetId`
@@ -322,20 +324,20 @@ Le template expose notamment :
 - `hubToSpokePrivatePeeringId`
 - `spokePrivateToHubPeeringId`
 
-Ces outputs seront réutilisables dans les phases suivantes.
+These outputs can be reused in later phases.
 
 ---
 
-## Déploiement
+## Deployment
 
-### 1. Créer le Resource Group
+### 1. Create the Resource Group
 ```bash
 az group create \
   --name rg-lab-hubspoke-foundation-dev \
   --location westeurope
 ```
 
-### 2. Déployer la fondation
+### 2. Deploy the foundation
 ```bash
 az deployment group create \
   --resource-group rg-lab-hubspoke-foundation-dev \
@@ -345,24 +347,24 @@ az deployment group create \
 
 ---
 
-## Coût et philosophie low cost
+## Cost and Low-Cost Philosophy
 
-Cette phase a été conçue pour rester dans un périmètre **quasi sans coût**.
+This phase is designed to remain **almost cost-free**.
 
-### Choix retenus
-- pas de compute
-- pas de firewall
-- pas de gateway
-- pas d’IP publique
-- pas de service managé lourd
+### Choices made
+- no compute
+- no firewall
+- no gateway
+- no public IP
+- no heavy managed service
 
-### À noter
-- les VNets, subnets, NSG et Route Tables ont un coût négligeable dans ce contexte
-- les peerings peuvent générer un coût si du trafic circule, mais dans une fondation sans workload actif ce coût reste très faible
+### Note
+- VNets, subnets, NSGs, and Route Tables have negligible cost in this context
+- peerings may generate a cost if traffic flows, but in a foundation without active workloads this cost remains very low
 
 ---
 
-## Concepts Bicep pratiqués dans cette phase
+## Bicep Concepts Practiced in this Phase
 
 - `param`
 - `@allowed`
@@ -370,27 +372,27 @@ Cette phase a été conçue pour rester dans un périmètre **quasi sans coût**
 - `resource`
 - `resource existing`
 - `output`
-- interpolation de chaînes
-- tableaux d’objets
-- boucles `for`
-- propriétés optionnelles
+- string interpolation
+- object arrays
+- `for` loops
+- optional properties
 - `contains()`
 - `union()`
-- opérateur ternaire `? :`
-- dépendances implicites entre modules
+- ternary operator `? :`
+- implicit dependencies between modules
 
 ---
 
-## Ce que cette fondation ne fait pas encore
+## What this Foundation Does Not Yet Do
 
-La phase fondation ne déploie pas encore :
+The foundation phase does not yet deploy:
 
-- routes personnalisées avancées
+- advanced custom routes
 - Azure Firewall
 - VPN Gateway
 - Application Gateway
 - Virtual Machines
-- Private Endpoints réels
+- Real Private Endpoints
 - Private DNS
 - Storage Account
 - Public IP
@@ -399,31 +401,39 @@ La phase fondation ne déploie pas encore :
 
 ---
 
-## Prochaine étape
+## Next Steps
 
-La suite du lab pourra introduire des ressources plus fonctionnelles, selon le besoin :
+The next phases of the lab may introduce more functional resources as needed:
 
-1. **VMs de test**
+1. **Test VMs**
 2. **Private Endpoint**
 3. **VPN Gateway**
 4. **Application Gateway**
 5. **Azure Firewall**
-6. **Routage avancé**
-7. **Sécurité renforcée**
+6. **Advanced Routing**
+7. **Enhanced Security**
 
 ---
 
-## Résumé
+## Summary
 
-La phase fondation construit un socle Hub-and-Spoke Azure en Bicep :
+The foundation phase builds a Hub-and-Spoke Azure base with Bicep:
 
 - 3 VNets
 - 7 subnets
-- 2 NSG
+- 2 NSGs
 - 2 Route Tables
 - 4 peerings
-- structure modulaire
-- coût quasi nul
-- architecture prête pour la suite
+- modular structure
+- almost zero cost
+- architecture ready for the next steps
 
-C’est une base propre, lisible, pédagogique et évolutive pour les prochaines phases du lab.
+It is a clean, readable, educational, and scalable base for the next phases of the lab.
+
+---
+
+## Governance Files
+
+- `LICENSE`: MIT License
+- `CONTRIBUTING.md`: Contribution Guide
+- `CODE_OF_CONDUCT.md`: Code of Conduct
