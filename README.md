@@ -328,6 +328,57 @@ These outputs can be reused in later phases.
 
 ---
 
+## Prerequisites
+
+Before deploying this lab, make sure you have:
+
+- an active Azure subscription
+- Azure CLI installed on your machine
+- Bicep installed and available from Azure CLI
+- an authenticated Azure session
+- sufficient permissions to create resource groups and network resources
+
+### Install Azure CLI
+
+#### Windows
+```bash
+winget install --id Microsoft.AzureCLI
+```
+
+#### macOS
+```bash
+brew update && brew install azure-cli
+```
+
+#### Ubuntu / Debian
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+### Install or update Bicep
+
+```bash
+az bicep install
+az bicep upgrade
+az bicep version
+```
+
+### Authenticate to Azure
+
+```bash
+az login
+az account show
+```
+
+### Optional: select the target subscription
+
+If you have multiple Azure subscriptions, select the one you want to use before deployment:
+
+```bash
+az account list --output table
+az account set --subscription "<subscription-name-or-id>"
+```
+
 ## Deployment
 
 ### 1. Create the Resource Group
